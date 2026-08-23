@@ -1,14 +1,15 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const userAuth = require("../middlewares/auth");
-const { handleError } = require("../utils/helperfunctions");
+const { handleError,sanitizeUser } = require("../utils/helperfunctions");
 const { allowedFields } = require("../utils/constants");
 
 const router = express.Router();
 
 router.get("/api/user/profile", userAuth, async (req, res) => {
   try {
-    return res.status(200).json({ data: req.user });
+    const user = sanitizeUser(req.user)
+    return res.status(200).json({ data: user });
   } catch (err) {
     return handleError(res, err, 401);
   }

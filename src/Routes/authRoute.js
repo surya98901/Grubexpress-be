@@ -2,6 +2,7 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const User = require("../models/userModel");
 const { validateData } = require("../utils/validations");
+const {sanitizeUser} = require("../utils/helperfunctions")
 
 const router = express.Router();
 
@@ -18,10 +19,12 @@ router.post("/api/auth/signup", async (req, res) => {
     const haspassword = await bcrypt.hash(password, 10);
     const user = new User({ firstName, lastName, userName, phone, emailId, password: haspassword });
     await user.save();
-
+    
     const token = await user.getJWT();
     res.cookie("token", token, { httpOnly: true, maxAge: 60 * 60 * 1000 });
-    res.status(201).json({ user});
+    const userData = sanitizeUser(user)
+    
+    res.status(201).json({ userData});
   } 
   catch (error) {
     res.status(400).json({ message: error.message });
