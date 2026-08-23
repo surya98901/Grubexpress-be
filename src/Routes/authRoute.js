@@ -1,12 +1,11 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
-const userAuth = require("../middlewares/auth");
 const User = require("../models/userModel");
 const { validateData } = require("../utils/validations");
 
 const router = express.Router();
 
-router.post("/signup", async (req, res) => {
+router.post("/api/auth/signup", async (req, res) => {
   try {
     validateData(req);
     const { firstName,  lastName,userName, phone, emailId, password} = req.body;
@@ -28,7 +27,7 @@ router.post("/signup", async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 });
-router.post("/login", async (req, res) => {
+router.post("/api/auth/login", async (req, res) => {
     try{
         const { emailId, password } = req.body;
         const user = await User.findOne({ emailId: emailId });
@@ -47,7 +46,7 @@ router.post("/login", async (req, res) => {
         res.status(400).send("Something went wrong " + err.message);
     }
 });
-router.post("/logout", async (req, res) => {
+router.post("/api/auth/logout", async (req, res) => {
   try {
     res.clearCookie("token");
     res.send("Logout successful");

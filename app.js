@@ -1,19 +1,22 @@
 require("dotenv").config();
 const express = require("express");
 const connectDB = require("./src/config/db");
-const userAuth = require("./src/middlewares/auth");
+const cookieParser = require("cookie-parser");
 const authRoutes = require("./src/Routes/authRoute");
+const userRoutes = require("./src/Routes/userRoute")
 
 
 
 const app = express();
 
 const port = process.env.PORT || 3000;
+
 app.use(express.json());
+app.use(cookieParser());
+
 app.use("/", authRoutes);
-app.get("/", userAuth, (req, res) => {
-  res.json({ message: "Hello, World!" });
-});
+app.use("/", userRoutes);
+
 
 connectDB()
   .then(() => {
