@@ -12,15 +12,13 @@ const restaurentSchema = new mongoose.Schema({
     required: true,
     maxLength: 350,
   },
-  senderId: {
+  AdminId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true,
   },
-  ImageURL: {
-    type: URL,
-  },
-  addresses: [AddresSchema],
+
+  address: AddresSchema,
   Cusine: {
     type: [String],
     default: [],
@@ -32,10 +30,16 @@ const restaurentSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: {
-      values: ["open", "closed"],
+      values: ["open", "close"],
       message: "Invalid input for status.",
     },
   },
+  FSSAIID:{
+    type:String,
+    required: true,
+  },
+  VegOnly: { type: Boolean, default: false },
+  Active : { type: Boolean, default: true },
 });
 
-((moduke.export = mongoose), model("Restaurents", restaurentSchema));
+module.exports = mongoose.model("Restaurents", restaurentSchema);

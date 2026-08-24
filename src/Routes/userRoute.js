@@ -2,7 +2,7 @@ const express = require("express");
 const bcrypt = require("bcrypt");
 const userAuth = require("../middlewares/auth");
 const { handleError,sanitizeUser } = require("../utils/helperfunctions");
-const { allowedFields } = require("../utils/constants");
+const { userAllowedFields } = require("../utils/constants");
 
 const router = express.Router();
 
@@ -21,7 +21,7 @@ router.patch("/api/user/profile/edit", userAuth, async (req, res) => {
 
     const updateFeilds = Object.keys(req.body).every(
       (item) =>
-        allowedFields.includes(item) &&
+        userAllowedFields.includes(item) &&
         item !== "addresses" &&
         item !== "password",
     );

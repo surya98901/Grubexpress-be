@@ -1,9 +1,12 @@
 
-const allowedFields = [
+const userAllowedFields = [
     "firstName",
     "lastName",
     "userName",
     "phone",
     "addresses"
 ];
-module.exports = {allowedFields}
+const restaurentsAllowedFields = [
+    "Name", "Description", "Cusine", "FSSAIID", "status", "address", "VegOnly", "rating"
+]
+module.exports = {userAllowedFields,restaurentsAllowedFields}

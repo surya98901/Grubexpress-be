@@ -4,6 +4,7 @@ const connectDB = require("./src/config/db");
 const cookieParser = require("cookie-parser");
 const authRoutes = require("./src/Routes/authRoute");
 const userRoutes = require("./src/Routes/userRoute")
+const restaurentRoutes = require("./src/Routes/restaurentRoute")
 
 
 
@@ -16,6 +17,8 @@ app.use(cookieParser());
 
 app.use("/", authRoutes);
 app.use("/", userRoutes);
+app.use("/",restaurentRoutes )
+
 
 
 connectDB()
@@ -27,5 +30,5 @@ connectDB()
   })
   .catch((error) => {
     console.error("Failed to connect to MongoDB", error);
-    process.exit(1); // Exit process with failure
+    process.exit(1); 
   });

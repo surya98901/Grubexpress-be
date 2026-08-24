@@ -4,7 +4,7 @@ const mongoose = require("mongoose");
 const addressSchema = new mongoose.Schema({
   label: {
     type: String,
-    enum: ["Home", "Work", "Other"],
+    enum: ["Home", "Work", "Other", "Restaurent"],
     default: "Home",
   },
   addressLine: { type: String, required: true, trim: true },
