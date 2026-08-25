@@ -4,7 +4,7 @@ const connectDB = require("./src/config/db");
 const cookieParser = require("cookie-parser");
 const authRoutes = require("./src/Routes/authRoute");
 const userRoutes = require("./src/Routes/userRoute")
-const restaurentRoutes = require("./src/Routes/restaurentRoute")
+const restaurantRoutes = require("./src/Routes/restaurantRoute")
 
 
 
@@ -17,7 +17,7 @@ app.use(cookieParser());
 
 app.use("/", authRoutes);
 app.use("/", userRoutes);
-app.use("/",restaurentRoutes )
+app.use("/",restaurantRoutes )
 
 
 

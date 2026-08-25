@@ -1,7 +1,6 @@
 const mongoose = require("mongoose");
 const AddresSchema = require("./addressModel");
-const { listIndexes } = require("./userModel");
-const restaurentSchema = new mongoose.Schema({
+const restaurantSchema = new mongoose.Schema({
   Name: {
     type: String,
     required: true,
@@ -25,7 +24,10 @@ const restaurentSchema = new mongoose.Schema({
     maxLength: 20,
   },
   rating: {
-    type: String,
+    type: Number,
+    default:0,
+    min :0,
+    max:5,
   },
   status: {
     type: String,
@@ -40,6 +42,12 @@ const restaurentSchema = new mongoose.Schema({
   },
   VegOnly: { type: Boolean, default: false },
   Active : { type: Boolean, default: true },
-});
+  AdminId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "MenuItem",
+  },
+},{
+    timestamps: true,
+  },);
 
-module.exports = mongoose.model("Restaurents", restaurentSchema);
+module.exports = mongoose.model("Restaurants", restaurantSchema);

@@ -9,4 +9,14 @@ const userAllowedFields = [
 const restaurentsAllowedFields = [
     "Name", "Description", "Cusine", "FSSAIID", "status", "address", "VegOnly", "rating"
 ]
-module.exports = {userAllowedFields,restaurentsAllowedFields}
+const menuAllowedEditFields = [
+  "name",
+  "description",
+  "serves",
+  "price",
+  "cusine",
+  "category",
+  "type",
+  "imageURL",
+];
+module.exports = {userAllowedFields,restaurentsAllowedFields, menuAllowedEditFields}
