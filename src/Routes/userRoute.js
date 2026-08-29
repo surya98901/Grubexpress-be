@@ -1,14 +1,14 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const userAuth = require("../middlewares/auth");
-const { handleError,sanitizeUser } = require("../utils/helperfunctions");
+const { handleError, sanitizeUser } = require("../utils/helperfunctions");
 const { userAllowedFields } = require("../utils/constants");
 
 const router = express.Router();
 
 router.get("/api/user/profile", userAuth, async (req, res) => {
   try {
-    const user = sanitizeUser(req.user)
+    const user = sanitizeUser(req.user);
     return res.status(200).json({ data: user });
   } catch (err) {
     return handleError(res, err, 401);
@@ -164,4 +164,6 @@ router.patch("/api/user/address/:id/default", userAuth, async (req, res) => {
     return handleError(res, err);
   }
 });
+
+
 module.exports = router;

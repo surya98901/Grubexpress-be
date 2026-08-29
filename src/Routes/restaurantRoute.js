@@ -222,10 +222,17 @@ router.get(
   isRestaurant,
   async (req, res) => {
     try {
-      const menuList = await MenuItem.find({
-        restaurantId: req.params.id,
-      });
-
+      const {vegOnly, category} = req.query;
+      const filter = {restaurantId: req.params.id,}
+      if(vegOnly){
+        filter.type = "veg";
+      }
+      if(category){
+        filter.category = category;
+      }
+      const menuList = await MenuItem.find(
+        filter
+      );
       return res.status(200).json({
         message: "Menu fetched successfully",
         data: menuList,

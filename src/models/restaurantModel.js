@@ -40,7 +40,7 @@ const restaurantSchema = new mongoose.Schema({
     type:String,
     required: true,
   },
-  VegOnly: { type: Boolean, default: false },
+  vegOnly: { type: Boolean, default: false },
   Active : { type: Boolean, default: true },
   AdminId: {
     type: mongoose.Schema.Types.ObjectId,
