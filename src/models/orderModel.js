@@ -64,6 +64,7 @@ const orderSchema = new mongoose.Schema({
       ],
       message: "Invalid input for status.",
     },
+    default: "PLACED",
   },
 });
 orderSchema.pre("save", function () {

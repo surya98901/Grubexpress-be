@@ -1,13 +1,16 @@
 const express = require("express");
 const Restaurants = require("../models/restaurantModel");
 const MenuItem = require("../models/menuItemModel");
+const Order = require("../models/orderModel");
 const userAuth = require("../middlewares/auth");
 const isRestaurant = require("../middlewares/isRestaurant");
 const { handleError } = require("../utils/helperfunctions");
+
 const mongoose = require("mongoose");
 const {
   restaurantsAllowedFields,
   menuAllowedEditFields,
+  orderAllowedEditFields,
 } = require("../utils/constants");
 const router = express.Router();
 
@@ -222,17 +225,15 @@ router.get(
   isRestaurant,
   async (req, res) => {
     try {
-      const {vegOnly, category} = req.query;
-      const filter = {restaurantId: req.params.id,}
-      if(vegOnly){
+      const { vegOnly, category } = req.query;
+      const filter = { restaurantId: req.params.id };
+      if (vegOnly) {
         filter.type = "veg";
       }
-      if(category){
+      if (category) {
         filter.category = category;
       }
-      const menuList = await MenuItem.find(
-        filter
-      );
+      const menuList = await MenuItem.find(filter);
       return res.status(200).json({
         message: "Menu fetched successfully",
         data: menuList,
@@ -423,6 +424,82 @@ router.delete(
       return res.status(200).json({
         message: "done deletion",
         data: menuItem,
+      });
+    } catch (err) {
+      return handleError(res, err);
+    }
+  },
+);
+router.get(
+  "/api/restaurants/:id/orders",
+  userAuth,
+  isRestaurant,
+  async (req, res) => {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid ID format" });
+      }
+      if (req.restaurant.AdminId.toString() != req.user._id.toString()) {
+        throw new Error("You are not authorized to veiw orders");
+      }
+      const orders = await Order.find({
+        restaurantId: req.params.id,
+        orderStatus: "PLACED",
+      });
+      if (!orders) {
+        return res.status(404).json({
+          message: "No order list empty order",
+        });
+      }
+      return res.status(200).json({
+        message: "the oders",
+        data: orders,
+      });
+    } catch (err) {
+      return handleError(res, err);
+    }
+  },
+);
+
+router.patch(
+  "/api/restaurants/:id/orders/:Oid/status=:status",
+  userAuth,
+  isRestaurant,
+  async (req, res) => {
+    try {
+      const status = req.params.status;
+      if (
+        !mongoose.Types.ObjectId.isValid(req.params.id) ||
+        !mongoose.Types.ObjectId.isValid(req.params.Oid)
+      ) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid ID format" });
+      }
+      if (req.restaurant.AdminId.toString() != req.user._id.toString()) {
+        throw new Error("You are not authorized to modify this orders");
+      }
+      if (!orderAllowedEditFields.includes(status)) {
+        throw new Error("You are not authorized to modify this menu");
+      }
+      const orders = await Order.findOne({
+        _id: req.params.Oid,
+        restaurantId: req.params.id,
+        paymentStatus: "PAID",
+      });
+
+      if (!orders || orders.length === 0) {
+        return res.status(403).json({
+          message: "No order list empty order",
+        });
+      }
+      orders.orderStatus = status;
+      await orders.save();
+      return res.status(200).json({
+        message: "the oders",
+        data: orders.orderStatus,
       });
     } catch (err) {
       return handleError(res, err);

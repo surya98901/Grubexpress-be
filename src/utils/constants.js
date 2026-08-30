@@ -19,4 +19,11 @@ const menuAllowedEditFields = [
   "type",
   "imageURL",
 ];
-module.exports = {userAllowedFields,restaurentsAllowedFields, menuAllowedEditFields}
+const orderAllowedEditFields = [
+          "CONFIRMED",
+          "PREPARING",
+          "READY",
+          "OUT_FOR_DELIVERY",
+          "CANCELLED",
+        ]
+module.exports = {userAllowedFields,restaurentsAllowedFields, menuAllowedEditFields,orderAllowedEditFields}
