@@ -42,10 +42,6 @@ const restaurantSchema = new mongoose.Schema({
   },
   vegOnly: { type: Boolean, default: false },
   Active : { type: Boolean, default: true },
-  AdminId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "MenuItem",
-  },
 },{
     timestamps: true,
   },);

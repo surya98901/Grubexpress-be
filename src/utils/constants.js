@@ -26,4 +26,13 @@ const orderAllowedEditFields = [
           "OUT_FOR_DELIVERY",
           "CANCELLED",
         ]
-module.exports = {userAllowedFields,restaurentsAllowedFields, menuAllowedEditFields,orderAllowedEditFields}
+const allowedTransitions = {
+  PLACED: ["CONFIRMED", "CANCELLED"],
+  CONFIRMED: ["PREPARING", "CANCELLED"],
+  PREPARING: ["READY"],
+  READY: ["OUT_FOR_DELIVERY"],
+  OUT_FOR_DELIVERY: ["DELIVERED"],
+  DELIVERED: [],
+  CANCELLED: [],
+};
+module.exports = {userAllowedFields,restaurentsAllowedFields, menuAllowedEditFields,orderAllowedEditFields,allowedTransitions}

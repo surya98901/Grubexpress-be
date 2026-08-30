@@ -65,6 +65,9 @@ router.post("/api/user/order", userAuth, async (req, res) => {
     });
 
     await order.save();
+    await Cart.deleteOne({
+      userId: req.user._id,
+    });
     return res.status(201).json({
       message: "orders",
       Data: order,
@@ -89,21 +92,21 @@ router.patch("/api/user/order/:orderId/cancel", userAuth, async (req, res) => {
         message: "No order list empty order",
       });
     }
-    if(orders.orderStatus === "CANCELLED"){
+    if (orders.orderStatus === "CANCELLED") {
       return res.status(200).json({
         message: "order is already cancelled",
       });
     }
-    if(!["PLACED", "CONFIRMED",].includes(orders.orderStatus)){
+    if (!["PLACED", "CONFIRMED"].includes(orders.orderStatus)) {
       return res.status(200).json({
         message: "cannot cancel the order",
       });
     }
-    orders.orderStatus = "CANCELLED"
-    await orders.save()
+    orders.orderStatus = "CANCELLED";
+    await orders.save();
     return res.status(201).json({
-        message: "order cancelled",
-      });
+      message: "order cancelled",
+    });
   } catch (err) {
     return handleError(res, err);
   }

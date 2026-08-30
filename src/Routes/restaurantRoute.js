@@ -11,6 +11,7 @@ const {
   restaurantsAllowedFields,
   menuAllowedEditFields,
   orderAllowedEditFields,
+  allowedTransitions,
 } = require("../utils/constants");
 const router = express.Router();
 
@@ -464,12 +465,12 @@ router.get(
 );
 
 router.patch(
-  "/api/restaurants/:id/orders/:Oid/status=:status",
+  "/api/restaurants/:id/orders/:Oid",
   userAuth,
   isRestaurant,
   async (req, res) => {
     try {
-      const status = req.params.status;
+      const status = req.body.status;
       if (
         !mongoose.Types.ObjectId.isValid(req.params.id) ||
         !mongoose.Types.ObjectId.isValid(req.params.Oid)
@@ -493,6 +494,11 @@ router.patch(
       if (!orders || orders.length === 0) {
         return res.status(403).json({
           message: "No order list empty order",
+        });
+      }
+      if (!allowedTransitions[orders.orderStatus].includes(status)) {
+        return res.status(400).json({
+          message: `Cannot change order from ${orders.orderStatus} to ${status}`,
         });
       }
       orders.orderStatus = status;
