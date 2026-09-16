@@ -6,9 +6,9 @@ const menuItemSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Restaurants",
   },
-  name: {
+  title: {
     type: String,
-    requireed: true,
+    required: true,
   },
   description: {
     type: String,
@@ -50,5 +50,10 @@ const menuItemSchema = new mongoose.Schema({
     },
   },
   available: { type: Boolean, default: true },
+  foodItemId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: "FoodItem",
+  required: true,
+},
 });
 module.exports = mongoose.model("MenuItem", menuItemSchema);

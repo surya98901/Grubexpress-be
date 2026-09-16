@@ -15,7 +15,7 @@ const {
 } = require("../utils/constants");
 const router = express.Router();
 
-router.get("/api/restaurants", userAuth, async (req, res) => {
+router.get("/api/restaurants", async (req, res) => {
   try {
     const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = Math.min(
@@ -44,7 +44,7 @@ router.get("/api/restaurants", userAuth, async (req, res) => {
       .limit(limit);
     return res.status(200).json({
       message: "Recommendations fetched successfully",
-      data: restaurantsList,
+      restaurants: restaurantsList,
       pagination: {
         currentPage: page,
         totalPages: Math.ceil(totalRestaurants / limit),
@@ -89,11 +89,11 @@ router.post("/api/restaurants/create", userAuth, async (req, res) => {
   }
 });
 
-router.get("/api/restaurants/:id", userAuth, isRestaurant, async (req, res) => {
+router.get("/api/restaurants/:id", isRestaurant, async (req, res) => {
   try {
     return res.status(200).json({
-      message: `${req.user.firstName}, the restaurant details`,
-      data: req.restaurant,
+      message: ` the restaurant details`,
+      restaurant: req.restaurant,
     });
   } catch (err) {
     return handleError(res, err);
@@ -222,7 +222,6 @@ router.patch(
 
 router.get(
   "/api/restaurants/:id/menu",
-  userAuth,
   isRestaurant,
   async (req, res) => {
     try {

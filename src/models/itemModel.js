@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-
+/*{snap shot of item orderd by user}*/
 const itemSchema = new mongoose.Schema({
   menuItemId: {
     type: mongoose.Schema.Types.ObjectId,

@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const AddresSchema = require("./addressModel");
+const OfferSchema = require("./OfferModel")
 const restaurantSchema = new mongoose.Schema({
   Name: {
     type: String,
@@ -42,6 +43,21 @@ const restaurantSchema = new mongoose.Schema({
   },
   vegOnly: { type: Boolean, default: false },
   Active : { type: Boolean, default: true },
+  avgPriceforTwo:{
+    type: Number,
+    min : 0,
+  },
+  closesAt: {
+  type: String,
+  required: true,
+  match: /^([01]\d|2[0-3]):([0-5]\d)$/,
+},
+  offers : {
+    type:[String],
+  },
+  popular:{
+    type:Boolean,
+  },
 },{
     timestamps: true,
   },);

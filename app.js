@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const connectDB = require("./src/config/db");
 const cookieParser = require("cookie-parser");
+const cors = require("cors");
 const authRoutes = require("./src/Routes/authRoute");
 const userRoutes = require("./src/Routes/userRoute");
 const restaurantRoutes = require("./src/Routes/restaurantRoute");
@@ -14,8 +15,16 @@ const app = express();
 
 const port = process.env.PORT || 3000;
 
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use(cookieParser());
+
 
 app.use("/", authRoutes);
 app.use("/", userRoutes);
