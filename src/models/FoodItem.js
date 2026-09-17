@@ -1,14 +1,14 @@
 
 const mongoose = require("mongoose");
 /*{tosearch a food item}*/
-const FoodItemSchema  = new mongoose({
+const FoodItemSchema  = new mongoose.Schema({
     title : {
         type : String,
         required : true,
     },
     ImageURL : {
         type: String,
-        required : true,
+        default: "/fooditemDefault.png"
     },
 });
 
