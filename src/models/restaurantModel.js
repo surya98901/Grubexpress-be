@@ -17,7 +17,9 @@ const restaurantSchema = new mongoose.Schema({
     ref: "User",
     required: true,
   },
-
+  imageURL : {
+    type :String,
+  },
   address: AddresSchema,
   Cusine: {
     type: [String],

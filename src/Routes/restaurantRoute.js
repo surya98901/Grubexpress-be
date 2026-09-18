@@ -17,42 +17,59 @@ const router = express.Router();
 
 router.get("/api/restaurants", async (req, res) => {
   try {
-    const page = Math.max(1, parseInt(req.query.page, 10) || 1);
     const limit = Math.min(
       100,
-      Math.max(1, parseInt(req.query.limit, 10) || 10),
+      Math.max(1, parseInt(req.query.limit, 10) || 10)
     );
-    const skip = (page - 1) * limit;
-    const { cusine, minRating } = req.query;
+
+    const skip = Math.max(
+      0,
+      parseInt(req.query.skip, 10) || 0
+    );
+
+    const { cusine, minRating, city } = req.query;
+
     const filter = {
       status: "open",
     };
+
     if (cusine) {
       filter.Cusine = {
         $regex: new RegExp(cusine.trim(), "i"),
       };
     }
+
+    if (city) {
+      filter["address.city"] = city.trim();
+    }
+
     if (minRating && !isNaN(minRating)) {
       filter.rating = {
         $gte: Number(minRating),
       };
     }
-    const totalRestaurants = await Restaurants.countDocuments(filter);
-    const restaurantsList = await Restaurants.find(filter)
-      .select(restaurantsAllowedFields)
-      .skip(skip)
-      .limit(limit);
+
+    const totalRestaurants =
+      await Restaurants.countDocuments(filter);
+
+    const restaurantsList =
+      await Restaurants.find(filter)
+        .select(restaurantsAllowedFields)
+        .skip(skip)
+        .limit(limit);
+
     return res.status(200).json({
       message: "Recommendations fetched successfully",
       restaurants: restaurantsList,
       pagination: {
-        currentPage: page,
-        totalPages: Math.ceil(totalRestaurants / limit),
+        skip,
         openItems: restaurantsList.length,
         totalItems: totalRestaurants,
         limit,
+        hasMore: skip + restaurantsList.length < totalRestaurants,
       },
     });
+
   } catch (err) {
     return handleError(res, err);
   }
