@@ -9,7 +9,7 @@ const router = express.Router();
 router.get("/api/user/profile", userAuth, async (req, res) => {
   try {
     const user = sanitizeUser(req.user);
-    return res.status(200).json({ data: user });
+    return res.status(200).json({ userData: user });
   } catch (err) {
     return handleError(res, err, 401);
   }

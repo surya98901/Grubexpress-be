@@ -16,8 +16,8 @@ router.post("/api/auth/signup", async (req, res) => {
       throw new Error("User already exists with this email");
     }
 
-    const haspassword = await bcrypt.hash(password, 10);
-    const user = new User({ firstName, lastName, userName, phone, emailId, password: haspassword });
+    const hashpassword = await bcrypt.hash(password, 10);
+    const user = new User({ firstName, lastName, userName, phone, emailId, password: hashpassword });
     await user.save();
     
     const token = await user.getJWT();
@@ -40,13 +40,12 @@ router.post("/api/auth/login", async (req, res) => {
         const isMatch = await user.validatePassword(password);
         if(  isMatch){
           const token = await user.getJWT();
-          res.cookie("token", token, {httpOnly: true, maxAge: 3600000});
-          res.send("Login successful");
+           res.status(201).json({message: "sign successfull", userData : user});
         }else{
            throw new Error("invalid credentials");
         }
     }catch(err){
-        res.status(400).send("Something went wrong " + err.message);
+        res.status(400).json({error : err});
     }
 });
 router.post("/api/auth/logout", async (req, res) => {
@@ -54,7 +53,7 @@ router.post("/api/auth/logout", async (req, res) => {
     res.clearCookie("token");
     res.send("Logout successful");
     } catch (err) {
-    res.status(400).send("Something went wrong " + err.message);
+    res.status(400).json({error : err});
   }
 });
 module.exports = router;
