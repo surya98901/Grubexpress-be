@@ -6,7 +6,7 @@ const itemSchema = new mongoose.Schema({
     ref: "MenuItem",
     required: true,
   },
-    name: {
+  title: {
     type: String,
     required: true,
   },
@@ -23,11 +23,22 @@ const itemSchema = new mongoose.Schema({
     min: 0,
   },
   subTotal: {
-      type: Number,
-      required: true,
-      default: 0,
-      min: 0,
+    type: Number,
+    required: true,
+    default: 0,
+    min: 0,
+  },
+  type: {
+    type: String,
+    enum: {
+      values: ["veg", "non-veg", "has-egg"],
+      message: "Invalid input for status.",
+    },
+  },
+  imageURL: {
+      type: String,
+      default: "ancdligbfdlvkbfli",
     },
 });
 
-module.exports = itemSchema ;
+module.exports = itemSchema;
