@@ -19,24 +19,22 @@ router.patch("/api/user/profile/edit", userAuth, async (req, res) => {
     const data = req.body;
     const user = req.user;
 
-    const updateFeilds = Object.keys(req.body).every(
-      (item) =>
-        userAllowedFields.includes(item) &&
-        item !== "addresses" &&
-        item !== "password",
+    const updateFields = Object.keys(req.body).every((item) =>
+      userAllowedFields.includes(item),
     );
 
-    if (!updateFeilds) {
-      throw new Error("invalid feild");
+    if (!updateFields) {
+      throw new Error("invalid field");
     }
 
     Object.keys(data).forEach((item) => {
       user[item] = data[item];
     });
     await user.save();
+    const userData = sanitizeUser(user);
     return res.status(200).json({
       message: `${user.firstName}, your profile has been updated successfully`,
-      data: user,
+      data: userData,
     });
   } catch (err) {
     return handleError(res, err);
@@ -164,6 +162,5 @@ router.patch("/api/user/address/:id/default", userAuth, async (req, res) => {
     return handleError(res, err);
   }
 });
-
 
 module.exports = router;

@@ -7,5 +7,10 @@ const sanitizeUser = (user) => {
   delete userData.password;
   return userData;
 };
-
-module.exports = {handleError,sanitizeUser,};
+const setAuthCookie = (res, token) => {
+  res.cookie("token", token, {
+    httpOnly: true,
+    maxAge:  2 * 60 * 60 * 1000 ,
+  });
+};
+module.exports = {handleError,sanitizeUser,setAuthCookie};

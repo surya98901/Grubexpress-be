@@ -10,7 +10,7 @@ const restaurentsAllowedFields = [
     "Name", "Description", "Cusine", "FSSAIID", "status", "address", "VegOnly", "rating"
 ]
 const menuAllowedEditFields = [
-  "name",
+  "title",
   "description",
   "serves",
   "price",

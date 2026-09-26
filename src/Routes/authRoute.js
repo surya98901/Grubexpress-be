@@ -1,8 +1,9 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const User = require("../models/userModel");
+
 const { validateData } = require("../utils/validations");
-const { sanitizeUser } = require("../utils/helperfunctions");
+const { sanitizeUser,setAuthCookie } = require("../utils/helperfunctions");
 
 const router = express.Router();
 
@@ -29,12 +30,12 @@ router.post("/api/auth/signup", async (req, res) => {
     await user.save();
 
     const token = await user.getJWT();
-    res.cookie("token", token, { httpOnly: true, maxAge: 60 * 60 * 1000 });
+    setAuthCookie(res, token);
     const userData = sanitizeUser(user);
     res.status(201).json({ userData });
-  } catch (error) {
-    res.status(400).json({ message: error.message });
-  }
+  }catch (err) {
+  res.status(400).json({ message: err.message });
+}
 });
 router.post("/api/auth/login", async (req, res) => {
   try {
@@ -46,22 +47,22 @@ router.post("/api/auth/login", async (req, res) => {
     const isMatch = await user.validatePassword(password);
     if (isMatch) {
       const token = await user.getJWT();
-      res.cookie("token", token, { httpOnly: true, maxAge: 60 * 60 * 1000 });
+      setAuthCookie(res, token)
       const userData = sanitizeUser(user);
-      res.status(201).json({ message: "sign successfull", userData: userData });
+      res.status(200).json({ message: "sign successfull", userData: userData });
     } else {
       throw new Error("invalid credentials");
     }
-  } catch (err) {
-    res.status(400).json({ error: err });
-  }
+  }catch (err) {
+  res.status(400).json({ message: err.message });
+}
 });
 router.post("/api/auth/logout", async (req, res) => {
   try {
     res.clearCookie("token");
     res.send("Logout successful");
-  } catch (err) {
-    res.status(400).json({ error: err });
-  }
+  }catch (err) {
+  res.status(400).json({ message: err.message });
+}
 });
 module.exports = router;
