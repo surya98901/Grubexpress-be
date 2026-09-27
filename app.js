@@ -9,6 +9,7 @@ const restaurantRoutes = require("./src/Routes/restaurantRoute");
 const cartRoutes = require("./src/Routes/cart.Route");
 const  orderRoutes = require("./src/Routes/orderRoute");
 const itemsRoutes = require("./src/Routes/itemsRoute")
+const paymentRoutes = require("./src/Routes/paymentRoute")
 
 
 
@@ -33,6 +34,7 @@ app.use("/",restaurantRoutes );
 app.use("/", cartRoutes);
 app.use("/", orderRoutes);
 app.use("/", itemsRoutes);
+app.use("/", paymentRoutes);
 
 
 

@@ -35,21 +35,20 @@ router.get("/api/user/cart", userAuth, async (req, res) => {
 router.post("/api/user/cart/:itemId", userAuth, async (req, res) => {
   try {
     const { itemId } = req.params;
-
     if (!mongoose.Types.ObjectId.isValid(itemId)) {
       return res
         .status(400)
         .json({ success: false, message: "Invalid item ID format" });
     }
-
+  
     const item = await MenuItem.findById(itemId);
     if (!item) {
       return res.status(404).json({ message: "Menu item not found" });
     }
-
+   
     if (!item.available) {
       return res
-        .status(404)
+        .status(400)
         .json({ message: "The item is currently unavailable" });
     }
 
@@ -61,6 +60,7 @@ router.post("/api/user/cart/:itemId", userAuth, async (req, res) => {
         restaurantId: item.restaurantId,
         items: [],
       });
+     
     }
 
     if (

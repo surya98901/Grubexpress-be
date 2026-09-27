@@ -3,6 +3,11 @@ const userAuth = require("../middlewares/auth");
 const { handleError } = require("../utils/helperfunctions");
 const Order = require("../models/orderModel");
 const Cart = require("../models/cartModel");
+const Payment = require("../models/paymentModel");
+const {
+  paymentAllowedStatusFields,
+  allowedPaymentTransitions,
+} = require("../utils/constants");
 const router = express.Router();
 const mongoose = require("mongoose");
 
@@ -11,7 +16,7 @@ router.get("/api/user/order", userAuth, async (req, res) => {
     const orders = await Order.find({ userId: req.user._id });
     return res.status(200).json({
       message: "orders",
-      Data: orders,
+      data: orders,
     });
   } catch (err) {
     return handleError(res, err);
@@ -35,7 +40,7 @@ router.get("/api/user/order/:orderId", userAuth, async (req, res) => {
     }
     return res.status(200).json({
       message: "orders",
-      Data: orders,
+      data: orders,
     });
   } catch (err) {
     return handleError(res, err);
@@ -47,35 +52,47 @@ router.post("/api/user/order", userAuth, async (req, res) => {
     if (!cartDetails || cartDetails.items.length === 0) {
       return res.status(400).json({ message: "Cart is already empty" });
     }
-    const { discount, coupon } = req.query;
+
     const addressIndex = req.user.addresses.findIndex(
       (i) => i.isDefault === true,
     );
-
-    const deliveryFee = cartDetails.total >= 1000 ? 0 : 35;
-
+    const discount = 0;
+    const deliveryFee = cartDetails.total >= 1000 ? 10 : 35;
     const order = new Order({
       userId: req.user._id,
       restaurantId: cartDetails.restaurantId,
       items: cartDetails.items,
       address: req.user.addresses[addressIndex],
-      discount: discount,
-      deliveryFee: deliveryFee,
+      discount,
+      deliveryFee :deliveryFee ,
       orderStatus: "PLACED",
     });
-
+     await order.save();
+    const payment = new Payment({
+      orderId: order._id,
+      userId: req.user._id,
+      amount: order.totalAmount,
+      expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+    });
+    order.paymentId = payment._id;
     await order.save();
+
+    await payment.save();
     await Cart.deleteOne({
       userId: req.user._id,
     });
+
     return res.status(201).json({
       message: "orders",
-      Data: order,
+      data: {
+        order, payment
+      },
     });
   } catch (err) {
     return handleError(res, err);
   }
 });
+
 router.patch("/api/user/order/:orderId/cancel", userAuth, async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.orderId)) {

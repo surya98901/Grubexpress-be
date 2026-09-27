@@ -344,6 +344,8 @@ router.patch(
 
       if (!updateFields) {
         throw new Error("Invalid field");
+      }if (!updateFields) {
+        throw new Error("Invalid field");
       }
       const menuItem = await MenuItem.findOne({
         _id: req.params.menuItemId,
