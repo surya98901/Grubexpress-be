@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 const User = require("../models/userModel");
 
 const { validateData } = require("../utils/validations");
-const { sanitizeUser,setAuthCookie } = require("../utils/helperfunctions");
+const { sanitizeUser, setAuthCookie } = require("../utils/helperfunctions");
 
 const router = express.Router();
 
@@ -12,12 +12,17 @@ router.post("/api/auth/signup", async (req, res) => {
     validateData(req);
     const { firstName, lastName, userName, phone, emailId, password } =
       req.body;
-    const existinguser = await User.findOne({ emailId: emailId });
 
+    const existinguser = await User.findOne({ emailId: emailId });
     if (existinguser) {
       throw new Error("User already exists with this email");
     }
-
+    
+    const allowedRoles = ["customer", "admin"];
+    const userRole = req.query.role;
+    if (!allowedRoles.includes(userRole)) {
+      throw new Error("Invalid role");
+    }
     const hashpassword = await bcrypt.hash(password, 10);
     const user = new User({
       firstName,
@@ -26,6 +31,7 @@ router.post("/api/auth/signup", async (req, res) => {
       phone,
       emailId,
       password: hashpassword,
+      role: userRole,
     });
     await user.save();
 
@@ -33,9 +39,9 @@ router.post("/api/auth/signup", async (req, res) => {
     setAuthCookie(res, token);
     const userData = sanitizeUser(user);
     res.status(201).json({ userData });
-  }catch (err) {
-  res.status(400).json({ message: err.message });
-}
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
 });
 router.post("/api/auth/login", async (req, res) => {
   try {
@@ -44,25 +50,28 @@ router.post("/api/auth/login", async (req, res) => {
     if (!user) {
       throw new Error("invalid credentials");
     }
+    if (user.role != req.query.role) {
+      throw new Error("invalid role sign in attempt");
+    }
     const isMatch = await user.validatePassword(password);
     if (isMatch) {
       const token = await user.getJWT();
-      setAuthCookie(res, token)
+      setAuthCookie(res, token);
       const userData = sanitizeUser(user);
       res.status(200).json({ message: "sign successfull", userData: userData });
     } else {
       throw new Error("invalid credentials");
     }
-  }catch (err) {
-  res.status(400).json({ message: err.message });
-}
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
 });
 router.post("/api/auth/logout", async (req, res) => {
   try {
     res.clearCookie("token");
     res.send("Logout successful");
-  }catch (err) {
-  res.status(400).json({ message: err.message });
-}
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
 });
 module.exports = router;
