@@ -10,6 +10,7 @@ const cartRoutes = require("./src/Routes/cart.Route");
 const  orderRoutes = require("./src/Routes/orderRoute");
 const itemsRoutes = require("./src/Routes/itemsRoute")
 const paymentRoutes = require("./src/Routes/paymentRoute")
+const adminRoutes = require("./src/Routes/adminRoute")
 
 
 
@@ -35,7 +36,7 @@ app.use("/", cartRoutes);
 app.use("/", orderRoutes);
 app.use("/", itemsRoutes);
 app.use("/", paymentRoutes);
-
+app.use("/", adminRoutes);
 
 
 connectDB()

@@ -1,6 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const userAuth = require("../middlewares/auth");
+const {userAuth} = require("../middlewares/auth");
 const { handleError } = require("../utils/helperfunctions");
 
 const Cart = require("../models/cartModel");

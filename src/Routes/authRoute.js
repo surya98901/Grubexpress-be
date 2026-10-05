@@ -15,13 +15,13 @@ router.post("/api/auth/signup", async (req, res) => {
 
     const existinguser = await User.findOne({ emailId: emailId });
     if (existinguser) {
-      throw new Error("User already exists with this email");
+      return res.status(400).json({ message: "User already exists with this email" });
     }
     
     const allowedRoles = ["customer", "admin"];
     const userRole = req.query.role;
     if (!allowedRoles.includes(userRole)) {
-      throw new Error("Invalid role");
+      return res.status(400).json({ message: "Invalid role" });
     }
     const hashpassword = await bcrypt.hash(password, 10);
     const user = new User({

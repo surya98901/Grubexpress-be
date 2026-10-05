@@ -1,6 +1,6 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
-const userAuth = require("../middlewares/auth");
+const {userAuth} = require("../middlewares/auth");
 const { handleError, sanitizeUser } = require("../utils/helperfunctions");
 const { userAllowedFields } = require("../utils/constants");
 

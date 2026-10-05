@@ -1,5 +1,5 @@
 const express = require("express");
-const userAuth = require("../middlewares/auth");
+const {userAuth} = require("../middlewares/auth");
 const { handleError } = require("../utils/helperfunctions");
 const Order = require("../models/orderModel");
 const Cart = require("../models/cartModel");

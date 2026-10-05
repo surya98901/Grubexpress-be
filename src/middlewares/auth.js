@@ -11,7 +11,22 @@ const userAuth = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
+    res.status(401).json({ message: 'Please authenticate.' });
+  }
+};
+
+const adminAuth = async (req, res, next) => {
+  try {
+    const token = req.cookies.token ;
+    if(!token) throw new Error("invalid token")
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findOne({ _id: decoded._id })
+    if(!user || user.role !== "admin") throw new Error("user not found or not an admin")
+    req.user = user;
+    next();
+  } catch (error) {
     res.status(401).json({ message: 'Please authenticate bot.' });
   }
 };
-module.exports = userAuth;
+
+module.exports = { userAuth, adminAuth };
