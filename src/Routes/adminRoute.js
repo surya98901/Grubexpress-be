@@ -3,6 +3,7 @@
 const express = require("express");
 const isRestaurant = require("../middlewares/isRestaurant");
 const Restaurants = require("../models/restaurantModel");
+const MenuItem = require("../models/menuItemModel")
 const { adminAuth} = require("../middlewares/auth");
 const { handleError, sanitizeUser } = require("../utils/helperfunctions");
 const Order = require("../models/orderModel");
@@ -116,12 +117,10 @@ router.patch(
       const updateFields = Object.keys(req.body).every((item) =>
         menuAllowedEditFields.includes(item),
       );
-
       if (!updateFields) {
-        throw new Error("Invalid field");
-      }if (!updateFields) {
-        throw new Error("Invalid field");
+        throw new Error("Invalid field", updateFields);
       }
+      
       const menuItem = await MenuItem.findOne({
         _id: req.params.menuItemId,
         restaurantId: req.params.id,
