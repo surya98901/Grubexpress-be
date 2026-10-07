@@ -76,4 +76,13 @@ orderSchema.pre("save", function () {
   this.tax = Math.ceil(this.subTotal * 0.05);
   this.totalAmount = this.subTotal + this.tax - this.discount +this.deliveryFee
 });
+orderSchema.index({
+  userId: 1,
+  createdAt: -1,
+});
+
+orderSchema.index({
+  restaurantId: 1,
+  orderStatus: 1,
+});
 module.exports = mongoose.model("Order", orderSchema);

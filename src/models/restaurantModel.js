@@ -38,6 +38,7 @@ const restaurantSchema = new mongoose.Schema({
       values: ["open", "close"],
       message: "Invalid input for status.",
     },
+    default:"open",
   },
   FSSAIID:{
     type:String,

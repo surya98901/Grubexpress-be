@@ -5,6 +5,7 @@ const menuItemSchema = new mongoose.Schema({
   restaurantId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Restaurants",
+    required : true,
   },
   title: {
     type: String,
@@ -55,5 +56,7 @@ const menuItemSchema = new mongoose.Schema({
   ref: "FoodItem",
   required: true,
 },
+
 });
+menuItemSchema.index({ restaurantId: 1 });
 module.exports = mongoose.model("MenuItem", menuItemSchema);

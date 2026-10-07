@@ -7,7 +7,6 @@ const cartSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
-      unique:true,
     },
     restaurantId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -31,4 +30,8 @@ cartSchema.pre("save", function () {
   }
 
 });
+cartSchema.index(
+  { userId: 1 },
+  { unique: true }
+);
 module.exports = mongoose.model("Cart", cartSchema);

@@ -1,6 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
-const {userAuth} = require("../middlewares/auth");
+const { userAuth } = require("../middlewares/auth");
 const { handleError } = require("../utils/helperfunctions");
 
 const Cart = require("../models/cartModel");
@@ -40,28 +40,32 @@ router.post("/api/user/cart/:itemId", userAuth, async (req, res) => {
         .status(400)
         .json({ success: false, message: "Invalid item ID format" });
     }
-  
+
     const item = await MenuItem.findById(itemId);
     if (!item) {
       return res.status(404).json({ message: "Menu item not found" });
     }
-   
+
     if (!item.available) {
       return res
         .status(400)
         .json({ message: "The item is currently unavailable" });
     }
 
-    let cartDetails = await Cart.findOne({ userId: req.user._id });
-
-    if (!cartDetails) {
-      cartDetails = new Cart({
-        userId: req.user._id,
-        restaurantId: item.restaurantId,
-        items: [],
-      });
-     
-    }
+    let cartDetails = await Cart.findOneAndUpdate(
+      { userId: req.user._id },
+      {
+        $setOnInsert: {
+          userId: req.user._id,
+          restaurantId: item.restaurantId,
+          items: [],
+        },
+      },
+      {
+        upsert: true,
+        new: true,
+      },
+    );
 
     if (
       cartDetails.restaurantId &&
