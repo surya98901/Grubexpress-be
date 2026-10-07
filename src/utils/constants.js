@@ -19,7 +19,7 @@ const menuAllowedEditFields = [
   "type",
   "imageURL",
 ];
-const orderAllowedStatusFields = [
+const orderAllowedStatuses = [
           "CONFIRMED",
           "PREPARING",
           "READY",
@@ -46,4 +46,4 @@ const allowedPaymentTransitions = {
   FAILED: ["PENDING"],
   REFUNDED: [],
 };
-module.exports = {userAllowedFields,restaurentsAllowedFields, menuAllowedEditFields,orderAllowedStatusFields,allowedTransitions,paymentAllowedStatusFields,allowedPaymentTransitions}
+module.exports = {userAllowedFields,restaurentsAllowedFields, menuAllowedEditFields,orderAllowedStatuses,allowedTransitions,paymentAllowedStatusFields,allowedPaymentTransitions}

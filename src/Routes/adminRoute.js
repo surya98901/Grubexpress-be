@@ -1,38 +1,33 @@
-
-
 const express = require("express");
 const isRestaurant = require("../middlewares/isRestaurant");
 const Restaurants = require("../models/restaurantModel");
-const MenuItem = require("../models/menuItemModel")
-const { adminAuth} = require("../middlewares/auth");
-const { handleError, sanitizeUser } = require("../utils/helperfunctions");
+const MenuItem = require("../models/menuItemModel");
+const { adminAuth } = require("../middlewares/auth");
+const { handleError } = require("../utils/helperfunctions");
 const Order = require("../models/orderModel");
 const mongoose = require("mongoose");
 const {
-
   menuAllowedEditFields,
-  orderAllowedEditFields,
+  orderAllowedStatuses,
   allowedTransitions,
 } = require("../utils/constants");
 
-
 const router = express.Router();
 
-
 router.get("/api/admin/restaurants", adminAuth, async (req, res) => {
-  try{
-    const user= req.user;
-    if(user.role !== "admin"){
+  try {
+    const user = req.user;
+    if (user.role !== "admin") {
       return res.status(403).json({
         message: "Access denied. Only admins can access this route.",
       });
     }
-    const restaurants = await Restaurants.find({AdminId : user._id});
+    const restaurants = await Restaurants.find({ AdminId: user._id });
     return res.status(200).json({
       message: "List of restaurants",
       data: restaurants,
     });
-  }catch(err){
+  } catch (err) {
     return handleError(res, err);
   }
 });
@@ -43,20 +38,6 @@ router.post(
   isRestaurant,
   async (req, res) => {
     try {
-      if (req.user.role != "admin") {
-        return res.status(401).json({
-          message: "Unauthorized account. You must be a restaurant admin",
-        });
-      }
-
-      const restaurant = req.restaurant;
-
-      if (restaurant.AdminId.toString() !== req.user._id.toString()) {
-        return res.status(403).json({
-          message: "You are not authorized to modify this restaurant",
-        });
-      }
-
       const {
         name,
         description,
@@ -110,17 +91,13 @@ router.patch(
           .json({ success: false, message: "Invalid ID format" });
       }
 
-      if (restaurant.AdminId.toString() != req.user._id.toString()) {
-        throw new Error("You are not authorized to modify this menu");
-      }
-
       const updateFields = Object.keys(req.body).every((item) =>
         menuAllowedEditFields.includes(item),
       );
       if (!updateFields) {
         throw new Error("Invalid field", updateFields);
       }
-      
+
       const menuItem = await MenuItem.findOne({
         _id: req.params.menuItemId,
         restaurantId: req.params.id,
@@ -157,9 +134,6 @@ router.patch(
       }
       if (typeof req.body.available !== "boolean") {
         throw new Error("Active must be boolean");
-      }
-      if (req.restaurant.AdminId.toString() != req.user._id.toString()) {
-        throw new Error("You are not authorized to modify this menu");
       }
 
       const menuItem = await MenuItem.findOne({
@@ -200,9 +174,6 @@ router.delete(
           .status(400)
           .json({ success: false, message: "Invalid ID format" });
       }
-      if (req.restaurant.AdminId.toString() != req.user._id.toString()) {
-        throw new Error("You are not authorized to modify this menu");
-      }
 
       const menuItem = await MenuItem.findOne({
         _id: req.params.menuItemId,
@@ -228,20 +199,14 @@ router.get(
   adminAuth,
   isRestaurant,
   async (req, res) => {
+    const { status } = req.query;
+    const filter = { restaurantId: req.params.id };
+    if (status) {
+      filter.orderStatus = status;
+    }
     try {
-      if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid ID format" });
-      }
-      if (req.restaurant.AdminId.toString() != req.user._id.toString()) {
-        throw new Error("You are not authorized to veiw orders");
-      }
-      const orders = await Order.find({
-        restaurantId: req.params.id,
-        orderStatus: "PLACED",
-      });
-      if (!orders) {
+      const orders = await Order.find(filter);
+      if (orders.length === 0) {
         return res.status(404).json({
           message: "No order list empty order",
         });
@@ -263,19 +228,15 @@ router.patch(
   async (req, res) => {
     try {
       const status = req.body.status;
-      if (
-        !mongoose.Types.ObjectId.isValid(req.params.id) ||
-        !mongoose.Types.ObjectId.isValid(req.params.Oid)
-      ) {
+      if (!mongoose.Types.ObjectId.isValid(req.params.Oid)) {
         return res
           .status(400)
           .json({ success: false, message: "Invalid ID format" });
       }
-      if (req.restaurant.AdminId.toString() != req.user._id.toString()) {
-        throw new Error("You are not authorized to modify this orders");
-      }
-      if (!orderAllowedEditFields.includes(status)) {
-        throw new Error("You are not authorized to modify this menu");
+      if (!orderAllowedStatuses.includes(status)) {
+        return res.status(400).json({
+          message: "Invalid order status",
+        });
       }
       const orders = await Order.findOne({
         _id: req.params.Oid,
@@ -304,6 +265,5 @@ router.patch(
     }
   },
 );
-
 
 module.exports = router;
