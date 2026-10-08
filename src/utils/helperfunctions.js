@@ -1,6 +1,26 @@
 
-const handleError = (res, err, status = 400) => {
-  return res.status(status).json({ message: err.message || "Something went wrong" });
+const handleError = (res, err) => {
+  console.error(err);
+
+  if (err.name === "ValidationError") {
+    return res.status(400).json({
+      success: false,
+      message: "Validation failed",
+      errors: Object.values(err.errors).map((error) => error.message),
+    });
+  }
+
+  if (err.code === 11000) {
+    return res.status(409).json({
+      success: false,
+      message: "A record with the provided value already exists",
+    });
+  }
+
+  return res.status(500).json({
+    success: false,
+    message: "Internal server error",
+  });
 };
 const sanitizeUser = (user) => {
   const userData = user.toObject();
@@ -9,8 +29,10 @@ const sanitizeUser = (user) => {
 };
 const setAuthCookie = (res, token) => {
   res.cookie("token", token, {
-    httpOnly: true,
-    maxAge:  2 * 60 * 60 * 1000 ,
-  });
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+  path: "/",
+});
 };
 module.exports = {handleError,sanitizeUser,setAuthCookie};

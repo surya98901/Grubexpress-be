@@ -121,7 +121,7 @@ router.patch("/api/user/order/:orderId/cancel", userAuth, async (req, res) => {
     }
     orders.orderStatus = "CANCELLED";
     await orders.save();
-    return res.status(201).json({
+    return res.status(200).json({
       message: "order cancelled",
     });
   } catch (err) {

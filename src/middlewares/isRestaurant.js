@@ -10,6 +10,27 @@ const isRestaurant = async (req, res, next) => {
       });
     }
 
+    const restaurant = await Restaurants.findById(req.params.id);
+
+    if (!restaurant) {
+      return res.status(404).json({
+        message: "Restaurant not found",
+      });
+    }
+    req.restaurant = restaurant;
+    next();
+  } catch (err) {
+    return handleError(res, err);
+  }
+};
+const isAdminRestaurant = async (req, res, next) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(400).json({
+        error: "Invalid restaurant ID format",
+      });
+    }
+
     const restaurant = await Restaurants.findOne({
       _id: req.params.id,
       AdminId: req.user._id,
@@ -26,4 +47,4 @@ const isRestaurant = async (req, res, next) => {
     return handleError(res, err);
   }
 };
-module.exports = isRestaurant;
+module.exports = { isRestaurant, isAdminRestaurant };
