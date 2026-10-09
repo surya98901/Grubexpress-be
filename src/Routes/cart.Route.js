@@ -63,7 +63,7 @@ router.post("/api/user/cart/:itemId", userAuth, async (req, res) => {
       },
       {
         upsert: true,
-        new: true,
+        returnDocument: 'after',
       },
     );
 
