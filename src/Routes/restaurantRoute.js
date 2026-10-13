@@ -3,7 +3,7 @@ const Restaurants = require("../models/restaurantModel");
 const MenuItem = require("../models/menuItemModel");
 const { isRestaurant } = require("../middlewares/isRestaurant");
 const { handleError } = require("../utils/helperfunctions");
-
+const Order = require("../models/orderModel");
 const { restaurantsAllowedFields } = require("../utils/constants");
 const router = express.Router();
 
@@ -90,7 +90,6 @@ router.get("/api/restaurants/:id", isRestaurant, async (req, res) => {
     return handleError(res, err);
   }
 });
-
 router.get("/api/restaurants/:id/menu", isRestaurant, async (req, res) => {
   try {
     const { vegOnly, category } = req.query;
@@ -110,5 +109,6 @@ router.get("/api/restaurants/:id/menu", isRestaurant, async (req, res) => {
     return handleError(res, err);
   }
 });
+
 
 module.exports = router;
