@@ -51,6 +51,7 @@ router.post("/api/auth/login", async (req, res) => {
       throw new Error("invalid credentials");
     }
     if (user.role != req.query.role) {
+      console.log(req.query.role)
       throw new Error("invalid role sign in attempt");
     }
     const isMatch = await user.validatePassword(password);

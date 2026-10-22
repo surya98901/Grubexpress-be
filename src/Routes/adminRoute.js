@@ -29,6 +29,39 @@ router.get("/api/admin/restaurants", adminAuth, async (req, res) => {
   }
 });
 
+router.post("/api/admin/restaurants", adminAuth, async (req, res) => {
+  try {
+    const {name, description, address, cusine, FSSAID, closesAt} = req.body;
+      if (!name || !description || !address || cusine === undefined || !FSSAID) {
+        return res.status(400).json({
+          success: false,
+          message: "Missing required fields",
+        });
+      }
+    const restaurant = new Restaurants({
+      Name : name,
+      Description : description,
+      address : address,
+      Cusine : cusine,
+      FSSAIID : FSSAID,
+      closesAt: closesAt,
+      AdminId : req.user._id,
+    })
+
+   
+      await restaurant.save()
+     const restaurantData  = await Restaurants.find({ AdminId: req.user._id });
+    return res.status(200).json({
+      success: true,
+      message: "List of restaurants",
+      data: restaurantData,
+    });
+
+  } catch (err) {
+    return handleError(res, err);
+  }
+});
+
 router.post(
   "/api/admin/restaurants/:id/menu/add",
   adminAuth,
