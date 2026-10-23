@@ -69,33 +69,39 @@ router.post(
   async (req, res) => {
     try {
       const {
-        name,
+        title,
         description,
         serves,
         price,
         cusine,
-        rating,
         category,
         type,
+        foodItemId,
       } = req.body;
-
-      if (!name || !description || !serves || price === undefined || !category || !type) {
+      if (!mongoose.Types.ObjectId.isValid(foodItemId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid menu item ID format",
+        });
+      }
+      if (!title || !description || !serves || price === undefined || !category || !type || !foodItemId) {
         return res.status(400).json({
           success: false,
           message: "Missing required menu item fields",
+          data : req.body
         });
       }
-
+      
       const menuItem = new MenuItem({
         restaurantId: req.params.id,
-        name,
+        title,
         description,
         serves,
         price,
         cusine,
-        rating,
         category,
         type,
+        foodItemId,
       });
 
       await menuItem.save();
