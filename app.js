@@ -11,7 +11,7 @@ const  orderRoutes = require("./src/Routes/orderRoute");
 const itemsRoutes = require("./src/Routes/itemsRoute")
 const paymentRoutes = require("./src/Routes/paymentRoute")
 const adminRoutes = require("./src/Routes/adminRoute")
-
+const  reservationsRoutes = require("./src/Routes/reservationRoute")
 
 
 const app = express();
@@ -37,6 +37,7 @@ app.use("/", orderRoutes);
 app.use("/", itemsRoutes);
 app.use("/", paymentRoutes);
 app.use("/", adminRoutes);
+app.use("/", reservationsRoutes);
 
 
 connectDB()
