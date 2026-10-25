@@ -2,6 +2,7 @@ const express = require("express");
 const {isAdminRestaurant} = require("../middlewares/isRestaurant");
 const Restaurants = require("../models/restaurantModel");
 const MenuItem = require("../models/menuItemModel");
+const Reservation = require("../models/reservationModel");
 const { adminAuth } = require("../middlewares/auth");
 const { handleError } = require("../utils/helperfunctions");
 const Payment = require("../models/paymentModel");
@@ -317,6 +318,7 @@ router.get(
   },
 );
 
+
 router.patch(
   "/api/admin/restaurants/:id/orders/:Oid",
   adminAuth,
@@ -384,6 +386,48 @@ router.patch(
         success: true,
         message: "Order status updated successfully",
         data: order.orderStatus,
+      });
+    } catch (err) {
+      return handleError(res, err);
+    }
+  },
+);
+
+router.get(
+  "/api/admin/restaurants/:id/reservations",
+  adminAuth,
+  isAdminRestaurant,
+  async (req, res) => {
+    try {
+      const { status } = req.query;
+
+      if (status && !orderAllowedStatuses.includes(status)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid order status",
+        });
+      }
+
+      const filter = {
+        restaurantId: req.params.id,
+      };
+
+      if (status) {
+        filter.status = status;
+      }
+      const reservation = await Reservation.find(filter);
+
+      if (reservation.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "No reservation found",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Reservation fetched successfully",
+        data: reservation,
       });
     } catch (err) {
       return handleError(res, err);
