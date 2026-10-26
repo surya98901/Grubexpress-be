@@ -364,12 +364,7 @@ router.patch(
         });
       }
 
-      if (payment.paymentStatus !== "PAID") {
-        return res.status(400).json({
-          success: false,
-          message: `Order cannot be updated because payment status is ${payment.paymentStatus}`,
-        });
-      }
+
 
       if (!allowedTransitions[order.orderStatus]?.includes(status)) {
         return res.status(400).json({

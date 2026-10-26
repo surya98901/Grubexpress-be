@@ -1,8 +1,9 @@
 const express = require("express");
-const {userAuth} = require("../middlewares/auth");
+const {userAuth,adminAuth} = require("../middlewares/auth");
 const { handleError } = require("../utils/helperfunctions");
 const Order = require("../models/orderModel");
 const Payment = require("../models/paymentModel");
+const { getPayment } = require("../controllers/paymentController");
 const {
   paymentAllowedStatusFields,
   allowedPaymentTransitions,
@@ -10,32 +11,9 @@ const {
 const router = express.Router();
 const mongoose = require("mongoose");
 
-router.get("/api/payment/:orderId", userAuth, async (req, res) => {
-  try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.orderId)) {
-      return res.status(400).json({
-        message: "Invalid order ID format",
-      });
-    }
-    const payment = await Payment.findOne({
-      orderId: req.params.orderId,
-      userId: req.user._id,
-    });
-    if (!payment) {
-      return res.status(404).json({
-        message: "failed to fetch paymentfor order",
-      });
-    }
-    return res.status(200).json({
-      message: "payment",
-      data: payment,
-    });
-  } catch (err) {
-    return handleError(res, err);
-  }
-});
+router.get("/api/payment/:orderId", userAuth,getPayment);
 /*{temp payment conformation created for portfolio purposes only }*/
-router.patch("/api/payment/:orderId", userAuth, async (req, res) => {
+router.patch("/api/payment/:orderId", adminAuth, async (req, res) => {
   try {
     const { orderId } = req.params;
     const { paymentStatus } = req.body;
