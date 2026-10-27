@@ -1,5 +1,5 @@
 const express = require("express");
-const {isAdminRestaurant} = require("../middlewares/isRestaurant");
+const { isAdminRestaurant } = require("../middlewares/isRestaurant");
 const Restaurants = require("../models/restaurantModel");
 const MenuItem = require("../models/menuItemModel");
 const Reservation = require("../models/reservationModel");
@@ -32,37 +32,86 @@ router.get("/api/admin/restaurants", adminAuth, async (req, res) => {
 
 router.post("/api/admin/restaurants", adminAuth, async (req, res) => {
   try {
-    const {name, description, address, cusine, FSSAID, closesAt} = req.body;
-      if (!name || !description || !address || cusine === undefined || !FSSAID) {
-        return res.status(400).json({
-          success: false,
-          message: "Missing required fields",
-        });
-      }
+    const { name, description, address, cusine, FSSAID, closesAt } = req.body;
+    if (!name || !description || !address || cusine === undefined || !FSSAID) {
+      return res.status(400).json({
+        success: false,
+        message: "Missing required fields",
+      });
+    }
     const restaurant = new Restaurants({
-      Name : name,
-      Description : description,
-      address : address,
-      Cusine : cusine,
-      FSSAIID : FSSAID,
+      Name: name,
+      Description: description,
+      address: address,
+      Cusine: cusine,
+      FSSAIID: FSSAID,
       closesAt: closesAt,
-      AdminId : req.user._id,
-    })
+      AdminId: req.user._id,
+    });
 
-   
-      await restaurant.save()
-     const restaurantData  = await Restaurants.find({ AdminId: req.user._id });
+    await restaurant.save();
+    const restaurantData = await Restaurants.find({ AdminId: req.user._id });
     return res.status(200).json({
       success: true,
       message: "List of restaurants",
       data: restaurantData,
     });
-
   } catch (err) {
     return handleError(res, err);
   }
 });
 
+router.get(
+  "/api/admin/restaurant/:id/status",
+  adminAuth,
+  isAdminRestaurant,
+  async (req, res) => {
+    try {
+      const restaurant = await Restaurants.findOne({
+        _id: req.params.id,
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "List of restaurants",
+        data: restaurant.status,
+      });
+    } catch (err) {
+      return handleError(res, err);
+    }
+  },
+);
+router.patch(
+  "/api/admin/restaurant/:id/status",
+  adminAuth,
+  isAdminRestaurant,
+  async (req, res) => {
+    try {
+      if (!["open", "close"].includes(req.body.status)){
+        return res.status(400).json({
+          success: false,
+          message: "Missing required fields",
+        });
+      }
+      const restaurant = await Restaurants.findById(req.params.id,);
+      if (!restaurant) {
+        return res.status(404).json({
+          success: false,
+          message: "Restaurant not found",
+        });
+      }
+      restaurant.status = req.body.status;
+      await restaurant.save();
+      return res.status(200).json({
+        success: true,
+        message: "List of restaurants",
+        data: restaurant,
+      });
+    } catch (err) {
+      return handleError(res, err);
+    }
+  },
+);
 router.post(
   "/api/admin/restaurants/:id/menu/add",
   adminAuth,
@@ -85,14 +134,22 @@ router.post(
           message: "Invalid menu item ID format",
         });
       }
-      if (!title || !description || !serves || price === undefined || !category || !type || !foodItemId) {
+      if (
+        !title ||
+        !description ||
+        !serves ||
+        price === undefined ||
+        !category ||
+        !type ||
+        !foodItemId
+      ) {
         return res.status(400).json({
           success: false,
           message: "Missing required menu item fields",
-          data : req.body
+          data: req.body,
         });
       }
-      
+
       const menuItem = new MenuItem({
         restaurantId: req.params.id,
         title,
@@ -181,7 +238,40 @@ router.patch(
     }
   },
 );
+router.get(
+  "/api/admin/restaurants/:id/menu/:menuItemId/available",
+  adminAuth,
+  isAdminRestaurant,
+  async (req, res) => {
+    try {
+      if (!mongoose.Types.ObjectId.isValid(req.params.menuItemId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Invalid menu item ID format",
+        });
+      }
 
+      const menuItem = await MenuItem.findOne({
+        _id: req.params.menuItemId,
+        restaurantId: req.params.id,
+      });
+
+      if (!menuItem) {
+        return res.status(404).json({
+          success: false,
+          message: "Menu item not found",
+        });
+      }
+      return res.status(200).json({
+        success: true,
+        message: "Menu item availability",
+        data: menuItem.available,
+      });
+    } catch (err) {
+      return handleError(res, err);
+    }
+  },
+);
 router.patch(
   "/api/admin/restaurants/:id/menu/:menuItemId/available",
   adminAuth,
@@ -218,7 +308,7 @@ router.patch(
         return res.status(200).json({
           success: true,
           message: "No changes made",
-          data: menuItem,
+          data: menuItem.available,
         });
       }
 
@@ -229,7 +319,7 @@ router.patch(
       return res.status(200).json({
         success: true,
         message: "Menu item availability updated successfully",
-        data: menuItem,
+        data: menuItem.available,
       });
     } catch (err) {
       return handleError(res, err);
@@ -318,7 +408,6 @@ router.get(
   },
 );
 
-
 router.patch(
   "/api/admin/restaurants/:id/orders/:Oid",
   adminAuth,
@@ -363,8 +452,6 @@ router.patch(
           message: "Payment not found for this order",
         });
       }
-
-
 
       if (!allowedTransitions[order.orderStatus]?.includes(status)) {
         return res.status(400).json({
