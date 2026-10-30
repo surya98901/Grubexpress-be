@@ -1,10 +1,10 @@
-const mongoose = require("mongoose");
 const Restaurants = require("../models/restaurantModel");
 const { handleError } = require("../utils/helperfunctions");
+const { isValidObjectId } = require("../utils/validations");
 
 const isRestaurant = async (req, res, next) => {
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    if (!isValidObjectId(req.params.id)) {
       return res.status(400).json({
         error: "Invalid restaurant ID format",
       });
@@ -25,9 +25,15 @@ const isRestaurant = async (req, res, next) => {
 };
 const isAdminRestaurant = async (req, res, next) => {
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+    if (!isValidObjectId(req.params.id)) {
       return res.status(400).json({
         error: "Invalid restaurant ID format",
+      });
+    }
+
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({
+        message: "Please authenticate.",
       });
     }
 

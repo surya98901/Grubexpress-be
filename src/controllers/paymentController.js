@@ -1,23 +1,20 @@
 
 const Payment = require("../models/paymentModel");
 const { expirePaymentAndCancelOrder } = require("../services/paymentExpiryService");
-const mongoose = require("mongoose");
+const { isValidObjectId } = require("../utils/validations");
 
 const getPayment = async (req, res) => {
   try {
     const { orderId } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+    if (!isValidObjectId(orderId)) {
       return res.status(400).json({
         success: false,
         message: "Invalid order ID format",
       });
     }
 
-    // Check expiry and cancel the order if necessary
     await expirePaymentAndCancelOrder(orderId);
-
-    // Fetch the latest payment after expiry processing
     const updatedPayment = await Payment.findOne({
       orderId,
       userId: req.user._id,

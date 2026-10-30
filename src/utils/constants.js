@@ -1,14 +1,38 @@
 
 const userAllowedFields = [
-    "firstName",
-    "lastName",
-    "userName",
-    "phone",
-    "addresses"
+  "firstName",
+  "lastName",
+  "userName",
+  "phone",
+  "addresses",
 ];
-const restaurentsAllowedFields = [
-    "Name", "Description", "Cusine", "FSSAIID", "status", "address", "VegOnly", "rating"
-]
+
+const addressAllowedFields = [
+  "label",
+  "addressLine",
+  "city",
+  "state",
+  "pincode",
+  "latitude",
+  "longitude",
+  "isDefault",
+];
+
+const restaurantsAllowedFields = [
+  "Name",
+  "Description",
+  "Cusine",
+  "FSSAIID",
+  "status",
+  "address",
+  "VegOnly",
+  "rating",
+  "imageURL"
+];
+
+// Keep restaurentsAllowedFields for backwards compatibility
+const restaurentsAllowedFields = restaurantsAllowedFields;
+
 const menuAllowedEditFields = [
   "title",
   "description",
@@ -19,13 +43,17 @@ const menuAllowedEditFields = [
   "type",
   "imageURL",
 ];
+
 const orderAllowedStatuses = [
-          "CONFIRMED",
-          "PREPARING",
-          "READY",
-          "OUT_FOR_DELIVERY",
-          "CANCELLED",
-        ]
+  "PLACED",
+  "CONFIRMED",
+  "PREPARING",
+  "READY",
+  "OUT_FOR_DELIVERY",
+  "DELIVERED",
+  "CANCELLED",
+];
+
 const allowedTransitions = {
   PLACED: ["CONFIRMED", "CANCELLED"],
   CONFIRMED: ["PREPARING", "CANCELLED"],
@@ -35,15 +63,36 @@ const allowedTransitions = {
   DELIVERED: [],
   CANCELLED: [],
 };
+
+const reservationAllowedStatuses = [
+  "PLACED",
+  "CONFIRMED",
+  "RESERVED",
+  "CANCELLED",
+];
+
 const paymentAllowedStatusFields = [
   "PAID",
   "FAILED",
   "REFUNDED",
 ];
+
 const allowedPaymentTransitions = {
   PENDING: ["PAID", "FAILED"],
   PAID: ["REFUNDED"],
   FAILED: ["PENDING"],
   REFUNDED: [],
 };
-module.exports = {userAllowedFields,restaurentsAllowedFields, menuAllowedEditFields,orderAllowedStatuses,allowedTransitions,paymentAllowedStatusFields,allowedPaymentTransitions}
+
+module.exports = {
+  userAllowedFields,
+  addressAllowedFields,
+  restaurantsAllowedFields,
+  restaurentsAllowedFields,
+  menuAllowedEditFields,
+  orderAllowedStatuses,
+  allowedTransitions,
+  reservationAllowedStatuses,
+  paymentAllowedStatusFields,
+  allowedPaymentTransitions,
+};

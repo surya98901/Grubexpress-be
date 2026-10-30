@@ -1,5 +1,5 @@
 const express = require("express");
-const {userAuth,adminAuth} = require("../middlewares/auth");
+const { userAuth, adminAuth } = require("../middlewares/auth");
 const { handleError } = require("../utils/helperfunctions");
 const Order = require("../models/orderModel");
 const Payment = require("../models/paymentModel");
@@ -8,23 +8,25 @@ const {
   paymentAllowedStatusFields,
   allowedPaymentTransitions,
 } = require("../utils/constants");
-const router = express.Router();
-const mongoose = require("mongoose");
+const { isValidObjectId } = require("../utils/validations");
 
-router.get("/api/payment/:orderId", userAuth,getPayment);
+const router = express.Router();
+
+router.get("/api/payment/:orderId", userAuth, getPayment);
+
 /*{temp payment conformation created for portfolio purposes only }*/
 router.patch("/api/payment/:orderId", adminAuth, async (req, res) => {
   try {
     const { orderId } = req.params;
     const { paymentStatus } = req.body;
 
-    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+    if (!isValidObjectId(orderId)) {
       return res.status(400).json({
         message: "Invalid order ID format",
       });
     }
 
-    if (!paymentAllowedStatusFields.includes(paymentStatus)) {
+    if (!paymentStatus || !paymentAllowedStatusFields.includes(paymentStatus)) {
       return res.status(400).json({
         message: "Invalid payment status",
       });
@@ -32,7 +34,6 @@ router.patch("/api/payment/:orderId", adminAuth, async (req, res) => {
 
     const payment = await Payment.findOne({
       orderId,
-      userId: req.user._id,
     });
 
     if (!payment) {
@@ -42,7 +43,7 @@ router.patch("/api/payment/:orderId", adminAuth, async (req, res) => {
     }
 
     const allowedNextStatuses =
-      allowedPaymentTransitions[payment.paymentStatus];
+      allowedPaymentTransitions[payment.paymentStatus] || [];
 
     if (!allowedNextStatuses.includes(paymentStatus)) {
       return res.status(400).json({
@@ -57,18 +58,13 @@ router.patch("/api/payment/:orderId", adminAuth, async (req, res) => {
     }
 
     await payment.save();
-    const order = await Order.findOne({
-      _id: orderId,
-      userId: req.user._id,
-    });
 
-    if (paymentStatus === "PAID") {
-      order.orderStatus = "CONFIRMED";
-      await order.save();
-    }
-
-    if (paymentStatus === "FAILED") {
-      // Leave order PLACED for now
+    const order = await Order.findById(orderId);
+    if (order) {
+      if (paymentStatus === "PAID") {
+        order.orderStatus = "CONFIRMED";
+        await order.save();
+      }
     }
 
     return res.status(200).json({
@@ -79,4 +75,5 @@ router.patch("/api/payment/:orderId", adminAuth, async (req, res) => {
     return handleError(res, err);
   }
 });
+
 module.exports = router;

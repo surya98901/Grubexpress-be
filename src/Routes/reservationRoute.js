@@ -3,12 +3,13 @@ const { userAuth } = require("../middlewares/auth");
 const { handleError } = require("../utils/helperfunctions");
 const Reservation = require("../models/reservationModel");
 const Restaurants = require("../models/restaurantModel");
+const { isValidObjectId, validateReservationInput } = require("../utils/validations");
+
 const router = express.Router();
-const mongoose = require("mongoose");
 
 router.get("/api/user/reservation", userAuth, async (req, res) => {
   try {
-    const reservations = await Reservation.find({ userId: req.user._id });
+    const reservations = await Reservation.find({ userId: req.user._id }).sort({ createdAt: -1 });
     return res.status(200).json({
       message: "reservations",
       data: reservations,
@@ -20,26 +21,30 @@ router.get("/api/user/reservation", userAuth, async (req, res) => {
 
 router.post("/api/user/reservation", userAuth, async (req, res) => {
   try {
-    const { restaurantId, headCount, time, date } = req.body;
-    if (!mongoose.Types.ObjectId.isValid(restaurantId)) {
-      return res.status(400).json({
-        error: "Invalid restaurant ID format",
-      });
-    }
+    validateReservationInput(req.body);
+
+    const { restaurantId, headCount, time, date, note } = req.body;
 
     const restaurant = await Restaurants.findById(restaurantId);
-
     if (!restaurant) {
       return res.status(404).json({
         message: "Restaurant not found",
       });
     }
+
+    if (restaurant.status === "close") {
+      return res.status(400).json({
+        message: "Restaurant is currently closed for reservations",
+      });
+    }
+
     const reservation = new Reservation({
       userId: req.user._id,
       restaurantId: restaurantId,
-      headCount: headCount,
-      time: time,
-      date: date,
+      headCount: Number(headCount),
+      time: time.trim(),
+      date: date.trim(),
+      note: note ? note.trim() : undefined,
     });
     await reservation.save();
 
@@ -56,7 +61,7 @@ router.post("/api/user/reservation", userAuth, async (req, res) => {
 
 router.get("/api/user/reservation/:reservationId", userAuth, async (req, res) => {
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.reservationId)) {
+    if (!isValidObjectId(req.params.reservationId)) {
       return res.status(400).json({
         message: "Invalid reservation ID format",
       });
@@ -78,9 +83,10 @@ router.get("/api/user/reservation/:reservationId", userAuth, async (req, res) =>
     return handleError(res, err);
   }
 });
+
 router.patch("/api/user/reservation/:reservationId/cancel", userAuth, async (req, res) => {
   try {
-     if (!mongoose.Types.ObjectId.isValid(req.params.reservationId)) {
+    if (!isValidObjectId(req.params.reservationId)) {
       return res.status(400).json({
         message: "Invalid reservation ID format",
       });
@@ -113,4 +119,5 @@ router.patch("/api/user/reservation/:reservationId/cancel", userAuth, async (req
     return handleError(res, err);
   }
 });
+
 module.exports = router;

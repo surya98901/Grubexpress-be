@@ -7,12 +7,18 @@ const { adminAuth } = require("../middlewares/auth");
 const { handleError } = require("../utils/helperfunctions");
 const Payment = require("../models/paymentModel");
 const Order = require("../models/orderModel");
-const mongoose = require("mongoose");
+const FoodItem = require("../models/FoodItem");
 const {
   menuAllowedEditFields,
   orderAllowedStatuses,
   allowedTransitions,
+  reservationAllowedStatuses,
 } = require("../utils/constants");
+const {
+  isValidObjectId,
+  validateRestaurantCreate,
+  validateMenuItemAdd,
+} = require("../utils/validations");
 
 const router = express.Router();
 
@@ -32,20 +38,25 @@ router.get("/api/admin/restaurants", adminAuth, async (req, res) => {
 
 router.post("/api/admin/restaurants", adminAuth, async (req, res) => {
   try {
+    validateRestaurantCreate(req.body);
+
     const { name, description, address, cusine, FSSAID, closesAt } = req.body;
-    if (!name || !description || !address || cusine === undefined || !FSSAID) {
-      return res.status(400).json({
-        success: false,
-        message: "Missing required fields",
-      });
-    }
+
     const restaurant = new Restaurants({
-      Name: name,
-      Description: description,
-      address: address,
-      Cusine: cusine,
-      FSSAIID: FSSAID,
-      closesAt: closesAt,
+      Name: name.trim(),
+      Description: description.trim(),
+      address: {
+        label: address.label || "Restaurent",
+        addressLine: address.addressLine.trim(),
+        city: address.city.trim(),
+        state: address.state.trim(),
+        pincode: address.pincode.trim(),
+        latitude: address.latitude !== undefined ? Number(address.latitude) : undefined,
+        longitude: address.longitude !== undefined ? Number(address.longitude) : undefined,
+      },
+      Cusine: Array.isArray(cusine) ? cusine.map((c) => c.trim()) : [cusine.trim()],
+      FSSAIID: FSSAID.trim(),
+      closesAt: closesAt.trim(),
       AdminId: req.user._id,
     });
 
@@ -81,19 +92,20 @@ router.get(
     }
   },
 );
+
 router.patch(
   "/api/admin/restaurant/:id/status",
   adminAuth,
   isAdminRestaurant,
   async (req, res) => {
     try {
-      if (!["open", "close"].includes(req.body.status)){
+      if (!req.body || !["open", "close"].includes(req.body.status)) {
         return res.status(400).json({
           success: false,
           message: "Missing required fields",
         });
       }
-      const restaurant = await Restaurants.findById(req.params.id,);
+      const restaurant = await Restaurants.findById(req.params.id);
       if (!restaurant) {
         return res.status(404).json({
           success: false,
@@ -112,12 +124,15 @@ router.patch(
     }
   },
 );
+
 router.post(
   "/api/admin/restaurants/:id/menu/add",
   adminAuth,
   isAdminRestaurant,
   async (req, res) => {
     try {
+      validateMenuItemAdd(req.body);
+
       const {
         title,
         description,
@@ -127,39 +142,28 @@ router.post(
         category,
         type,
         foodItemId,
+        imageURL,
       } = req.body;
-      if (!mongoose.Types.ObjectId.isValid(foodItemId)) {
-        return res.status(400).json({
+
+      const foodItem = await FoodItem.findById(foodItemId);
+      if (!foodItem) {
+        return res.status(404).json({
           success: false,
-          message: "Invalid menu item ID format",
-        });
-      }
-      if (
-        !title ||
-        !description ||
-        !serves ||
-        price === undefined ||
-        !category ||
-        !type ||
-        !foodItemId
-      ) {
-        return res.status(400).json({
-          success: false,
-          message: "Missing required menu item fields",
-          data: req.body,
+          message: "Referenced food item not found",
         });
       }
 
       const menuItem = new MenuItem({
         restaurantId: req.params.id,
-        title,
-        description,
-        serves,
-        price,
-        cusine,
-        category,
+        title: title.trim(),
+        description: description.trim(),
+        serves: serves ? Number(serves) : 1,
+        price: Number(price),
+        cusine: cusine.trim(),
+        category: category.trim(),
         type,
         foodItemId,
+        imageURL: imageURL ? imageURL.trim() : undefined,
       });
 
       await menuItem.save();
@@ -170,7 +174,7 @@ router.post(
 
       return res.status(201).json({
         success: true,
-        message: `${req.user.firstName}, you have successfully added ${menuItem.name} to the menu.`,
+        message: `${req.user.firstName}, you have successfully added ${menuItem.title} to the menu.`,
         data: menuList,
       });
     } catch (err) {
@@ -185,10 +189,17 @@ router.patch(
   isAdminRestaurant,
   async (req, res) => {
     try {
-      if (!mongoose.Types.ObjectId.isValid(req.params.menuItemId)) {
+      if (!isValidObjectId(req.params.menuItemId)) {
         return res.status(400).json({
           success: false,
           message: "Invalid menu item ID format",
+        });
+      }
+
+      if (!req.body || typeof req.body !== "object" || Array.isArray(req.body) || Object.keys(req.body).length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: "No fields provided for update",
         });
       }
 
@@ -203,11 +214,50 @@ router.patch(
         });
       }
 
-      if (Object.keys(req.body).length === 0) {
-        return res.status(400).json({
-          success: false,
-          message: "No fields provided for update",
-        });
+      if (req.body.price !== undefined) {
+        if (typeof req.body.price !== "number" || isNaN(req.body.price) || req.body.price < 0) {
+          return res.status(400).json({
+            success: false,
+            message: "Price must be a non-negative number",
+          });
+        }
+      }
+
+      if (req.body.serves !== undefined) {
+        if (typeof req.body.serves !== "number" || !Number.isInteger(req.body.serves) || req.body.serves < 1) {
+          return res.status(400).json({
+            success: false,
+            message: "Serves must be an integer greater than or equal to 1",
+          });
+        }
+      }
+
+      if (req.body.type !== undefined) {
+        const allowedTypes = ["veg", "non-veg", "has-egg"];
+        if (!allowedTypes.includes(req.body.type)) {
+          return res.status(400).json({
+            success: false,
+            message: `Type must be one of: ${allowedTypes.join(", ")}`,
+          });
+        }
+      }
+
+      if (req.body.title !== undefined) {
+        if (typeof req.body.title !== "string" || !req.body.title.trim() || req.body.title.trim().length > 100) {
+          return res.status(400).json({
+            success: false,
+            message: "Title must be between 1 and 100 characters",
+          });
+        }
+      }
+
+      if (req.body.description !== undefined) {
+        if (typeof req.body.description !== "string" || !req.body.description.trim() || req.body.description.trim().length > 350) {
+          return res.status(400).json({
+            success: false,
+            message: "Description must be between 1 and 350 characters",
+          });
+        }
       }
 
       const menuItem = await MenuItem.findOne({
@@ -238,13 +288,14 @@ router.patch(
     }
   },
 );
+
 router.get(
   "/api/admin/restaurants/:id/menu/:menuItemId/available",
   adminAuth,
   isAdminRestaurant,
   async (req, res) => {
     try {
-      if (!mongoose.Types.ObjectId.isValid(req.params.menuItemId)) {
+      if (!isValidObjectId(req.params.menuItemId)) {
         return res.status(400).json({
           success: false,
           message: "Invalid menu item ID format",
@@ -272,20 +323,21 @@ router.get(
     }
   },
 );
+
 router.patch(
   "/api/admin/restaurants/:id/menu/:menuItemId/available",
   adminAuth,
   isAdminRestaurant,
   async (req, res) => {
     try {
-      if (!mongoose.Types.ObjectId.isValid(req.params.menuItemId)) {
+      if (!isValidObjectId(req.params.menuItemId)) {
         return res.status(400).json({
           success: false,
           message: "Invalid menu item ID format",
         });
       }
 
-      if (typeof req.body.available !== "boolean") {
+      if (typeof req.body?.available !== "boolean") {
         return res.status(400).json({
           success: false,
           message: "Available must be a boolean",
@@ -313,7 +365,6 @@ router.patch(
       }
 
       menuItem.available = req.body.available;
-
       await menuItem.save();
 
       return res.status(200).json({
@@ -333,7 +384,7 @@ router.delete(
   isAdminRestaurant,
   async (req, res) => {
     try {
-      if (!mongoose.Types.ObjectId.isValid(req.params.menuItemId)) {
+      if (!isValidObjectId(req.params.menuItemId)) {
         return res.status(400).json({
           success: false,
           message: "Invalid menu item ID format",
@@ -388,7 +439,7 @@ router.get(
         filter.orderStatus = status;
       }
 
-      const orders = await Order.find(filter);
+      const orders = await Order.find(filter).sort({ createdAt: -1 });
 
       if (orders.length === 0) {
         return res.status(404).json({
@@ -416,7 +467,7 @@ router.patch(
     try {
       const { status } = req.body;
 
-      if (!mongoose.Types.ObjectId.isValid(req.params.Oid)) {
+      if (!isValidObjectId(req.params.Oid)) {
         return res.status(400).json({
           success: false,
           message: "Invalid order ID format",
@@ -461,7 +512,6 @@ router.patch(
       }
 
       order.orderStatus = status;
-
       await order.save();
 
       return res.status(200).json({
@@ -483,10 +533,10 @@ router.get(
     try {
       const { status } = req.query;
 
-      if (status && !orderAllowedStatuses.includes(status)) {
+      if (status && !reservationAllowedStatuses.includes(status)) {
         return res.status(400).json({
           success: false,
-          message: "Invalid order status",
+          message: "Invalid reservation status",
         });
       }
 
@@ -497,7 +547,7 @@ router.get(
       if (status) {
         filter.status = status;
       }
-      const reservation = await Reservation.find(filter);
+      const reservation = await Reservation.find(filter).sort({ createdAt: -1 });
 
       if (reservation.length === 0) {
         return res.status(404).json({

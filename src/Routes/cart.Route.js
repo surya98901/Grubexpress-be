@@ -1,10 +1,11 @@
 const express = require("express");
-const mongoose = require("mongoose");
 const { userAuth } = require("../middlewares/auth");
 const { handleError } = require("../utils/helperfunctions");
+const { isValidObjectId } = require("../utils/validations");
 
 const Cart = require("../models/cartModel");
 const MenuItem = require("../models/menuItemModel");
+const Restaurants = require("../models/restaurantModel");
 
 const router = express.Router();
 
@@ -35,7 +36,7 @@ router.get("/api/user/cart", userAuth, async (req, res) => {
 router.post("/api/user/cart/:itemId", userAuth, async (req, res) => {
   try {
     const { itemId } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(itemId)) {
+    if (!isValidObjectId(itemId)) {
       return res
         .status(400)
         .json({ success: false, message: "Invalid item ID format" });
@@ -52,6 +53,13 @@ router.post("/api/user/cart/:itemId", userAuth, async (req, res) => {
         .json({ message: "The item is currently unavailable" });
     }
 
+    const restaurant = await Restaurants.findById(item.restaurantId);
+    if (restaurant && restaurant.status === "close") {
+      return res
+        .status(400)
+        .json({ message: "This restaurant is currently closed" });
+    }
+
     let cartDetails = await Cart.findOneAndUpdate(
       { userId: req.user._id },
       {
@@ -63,12 +71,15 @@ router.post("/api/user/cart/:itemId", userAuth, async (req, res) => {
       },
       {
         upsert: true,
-        returnDocument: 'after',
+        returnDocument: "after",
       },
     );
 
+    // If existing cart has items from another restaurant, reject
     if (
       cartDetails.restaurantId &&
+      cartDetails.items &&
+      cartDetails.items.length > 0 &&
       cartDetails.restaurantId.toString() !== item.restaurantId.toString()
     ) {
       return res.status(400).json({
@@ -76,13 +87,23 @@ router.post("/api/user/cart/:itemId", userAuth, async (req, res) => {
       });
     }
 
+    // If cart was empty, ensure restaurantId is set to this item's restaurant
+    if (cartDetails.items.length === 0) {
+      cartDetails.restaurantId = item.restaurantId;
+    }
+
     const itemIndex = cartDetails.items.findIndex(
       (i) => i.menuItemId.toString() === itemId,
     );
+
     if (itemIndex > -1) {
+      if (cartDetails.items[itemIndex].quantity >= 50) {
+        return res.status(400).json({
+          message: "Maximum quantity limit (50) reached for this item",
+        });
+      }
       cartDetails.items[itemIndex].quantity += 1;
-      cartDetails.items[itemIndex].subTotal +=
-        cartDetails.items[itemIndex].price;
+      cartDetails.items[itemIndex].subTotal += cartDetails.items[itemIndex].price;
     } else {
       cartDetails.items.push({
         menuItemId: itemId,
@@ -110,7 +131,7 @@ router.patch("/api/user/cart/:itemId", userAuth, async (req, res) => {
   try {
     const { itemId } = req.params;
 
-    if (!mongoose.Types.ObjectId.isValid(itemId)) {
+    if (!isValidObjectId(itemId)) {
       return res
         .status(400)
         .json({ success: false, message: "Invalid item ID format" });

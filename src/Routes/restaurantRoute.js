@@ -1,48 +1,53 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const Restaurants = require("../models/restaurantModel");
 const MenuItem = require("../models/menuItemModel");
 const { isRestaurant } = require("../middlewares/isRestaurant");
 const { handleError } = require("../utils/helperfunctions");
-const Order = require("../models/orderModel");
 const { restaurantsAllowedFields } = require("../utils/constants");
+const {
+  isValidObjectId,
+  escapeRegex,
+  validatePagination,
+} = require("../utils/validations");
+
 const router = express.Router();
 
 router.get("/api/restaurants", async (req, res) => {
   try {
-    const limit = Math.min(
-      100,
-      Math.max(1, parseInt(req.query.limit, 10) || 10),
-    );
-
-    const skip = Math.max(0, parseInt(req.query.skip, 10) || 0);
-
+    const { limit, skip } = validatePagination(req.query);
     const { cusine, minRating, city, item } = req.query;
 
     const filter = {
       status: "open",
     };
 
-    if (cusine) {
+    if (cusine && typeof cusine === "string" && cusine.trim()) {
       filter.Cusine = {
-        $regex: new RegExp(cusine.trim(), "i"),
+        $regex: new RegExp(escapeRegex(cusine.trim()), "i"),
       };
     }
 
-    if (city) {
-      filter["address.city"] = city.trim();
+    if (city && typeof city === "string" && city.trim()) {
+      filter["address.city"] = {
+        $regex: new RegExp(`^${escapeRegex(city.trim())}$`, "i"),
+      };
     }
 
-    if (minRating && !isNaN(minRating)) {
+    if (minRating !== undefined && minRating !== null && minRating !== "") {
+      const parsedRating = Number(minRating);
+      if (isNaN(parsedRating) || parsedRating < 0 || parsedRating > 5) {
+        return res.status(400).json({
+          message: "minRating must be a number between 0 and 5",
+        });
+      }
       filter.rating = {
-        $gte: Number(minRating),
+        $gte: parsedRating,
       };
     }
-
-    let restaurantsList;
-    let totalRestaurants;
 
     if (item) {
-      if (!mongoose.Types.ObjectId.isValid(item)) {
+      if (!isValidObjectId(item)) {
         return res.status(400).json({
           message: "Invalid food item ID",
         });
@@ -58,9 +63,9 @@ router.get("/api/restaurants", async (req, res) => {
       };
     }
 
-    totalRestaurants = await Restaurants.countDocuments(filter);
+    const totalRestaurants = await Restaurants.countDocuments(filter);
 
-    restaurantsList = await Restaurants.find(filter)
+    const restaurantsList = await Restaurants.find(filter)
       .select(restaurantsAllowedFields)
       .skip(skip)
       .limit(limit);
@@ -80,6 +85,7 @@ router.get("/api/restaurants", async (req, res) => {
     return handleError(res, err);
   }
 });
+
 router.get("/api/restaurants/:id", isRestaurant, async (req, res) => {
   try {
     return res.status(200).json({
@@ -90,16 +96,20 @@ router.get("/api/restaurants/:id", isRestaurant, async (req, res) => {
     return handleError(res, err);
   }
 });
+
 router.get("/api/restaurants/:id/menu", isRestaurant, async (req, res) => {
   try {
     const { vegOnly, category } = req.query;
     const filter = { restaurantId: req.params.id };
-    if (vegOnly) {
+
+    if (vegOnly === "true" || vegOnly === true || vegOnly === "1") {
       filter.type = "veg";
     }
-    if (category) {
-      filter.category = category;
+
+    if (category && typeof category === "string" && category.trim()) {
+      filter.category = category.trim();
     }
+
     const menuList = await MenuItem.find(filter);
     return res.status(200).json({
       message: "Menu fetched successfully",
@@ -109,6 +119,5 @@ router.get("/api/restaurants/:id/menu", isRestaurant, async (req, res) => {
     return handleError(res, err);
   }
 });
-
 
 module.exports = router;
